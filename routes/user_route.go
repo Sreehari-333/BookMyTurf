@@ -1,7 +1,7 @@
 package routes
 
 import (
-	publicControllers "BookMyTurf/controllers/public"
+	publicControllers "BookMyTurf/controllers/user"
 	"BookMyTurf/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -15,4 +15,5 @@ func UserRoutes(router *gin.Engine) {
 	user.POST("/bookings", publicControllers.BookTurf)
 	user.GET("/bookings", publicControllers.GetMyBookings)
 	user.DELETE("/bookings/:id", publicControllers.CancelBooking)
+	user.GET("/profile", publicControllers.GetProfile)
 }

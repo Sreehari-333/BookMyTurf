@@ -1,7 +1,7 @@
 package main
 
 import (
-	"BookMyTurf/config"
+	"BookMyTurf/db"
 	"BookMyTurf/routes"
 
 	"github.com/gin-gonic/gin"
@@ -9,14 +9,19 @@ import (
 
 func main() {
 
-	config.ConnectDB() // Connecting DB
+	db.ConnectDB() // Connect to DB
 
-	router := gin.Default()
+	router := gin.Default() // Create router
+
+	router.Static("/static", "./template")
+
+	//  routes
 
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)
 	routes.AdminRoutes(router)
 	routes.PublicRoutes(router)
 
-	router.Run(":8080") // Starting server on default port
+	router.Run(":8080") //  Starting server
+
 }

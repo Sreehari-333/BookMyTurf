@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"BookMyTurf/config"
+	"BookMyTurf/db"
 	"BookMyTurf/models"
 	"net/http"
 
@@ -23,7 +23,7 @@ func CreateTurf(c *gin.Context) {
 		return
 	}
 
-	err = config.DB.Create(&turf).Error
+	err = db.DB.Create(&turf).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -46,7 +46,7 @@ func UpdateTurf(c *gin.Context) {
 
 	var existingTirf models.Turf
 
-	if err := config.DB.First(&existingTirf, turfId).Error; err != nil {
+	if err := db.DB.First(&existingTirf, turfId).Error; err != nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "turf not found",
@@ -63,7 +63,7 @@ func UpdateTurf(c *gin.Context) {
 		return
 	}
 
-	if err := config.DB.Model(&existingTirf).Updates(updatedData).Error; err != nil {
+	if err := db.DB.Model(&existingTirf).Updates(updatedData).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to update turf",
@@ -84,14 +84,14 @@ func DeleteTurf(c *gin.Context) {
 
 	var turf models.Turf
 
-	if err := config.DB.First(&turf, turfId).Error; err != nil {
+	if err := db.DB.First(&turf, turfId).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "turf not found",
 		})
 		return
 	}
 
-	if err := config.DB.Delete(&turf).Error; err != nil {
+	if err := db.DB.Delete(&turf).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to delete turf",
 		})

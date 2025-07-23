@@ -1,0 +1,18 @@
+/* static/user/profile.css */
+#user-profile {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 500px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#user-profile p {
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+#user-profile span {
+  font-weight: bold;
+  color: #2e86de;
+}

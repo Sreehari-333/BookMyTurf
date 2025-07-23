@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Block Slots</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
+    form {
+      margin-bottom: 2rem;
+      background: #f8f8f8;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    input, select, textarea {
+      display: block;
+      margin: 0.5rem 0 1rem 0;
+      padding: 0.5rem;
+      width: 100%;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .delete-btn {
+      background: red;
+      padding: 0.3rem 0.8rem;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+  </style>
+</head>
+<body>
+
+   
+
+  <h2>Block Turf Slot</h2>
+  <form id="blockSlotForm">
+    <label for="turf_id">Turf ID</label>
+    <input type="number" id="turf_id" required />
+
+    <label for="date">Date</label>
+    <input type="date" id="date" required />
+
+    <label for="start_time">Start Time</label>
+    <input type="time" id="start_time" required />
+
+    <label for="end_time">End Time</label>
+    <input type="time" id="end_time" required />
+
+    <label for="reason">Reason</label>
+    <textarea id="reason" rows="3" required></textarea>
+
+    <button type="submit">Block Slot</button>
+  </form>
+
+  <h3>Blocked Slots</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Turf ID</th>
+        <th>Date</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Reason</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="blockedSlotsTable"></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem("access_token");
+
+    document.getElementById("blockSlotForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const turf_id = parseInt(document.getElementById("turf_id").value);
+      const dateStr = document.getElementById("date").value;
+      const startStr = document.getElementById("start_time").value;
+      const endStr = document.getElementById("end_time").value;
+      const reason = document.getElementById("reason").value;
+
+      const startTime = new Date(`${dateStr}T${startStr}`);
+      const endTime = new Date(`${dateStr}T${endStr}`);
+      const dateOnly = new Date(dateStr);
+
+      if (endTime <= startTime) {
+        alert("End time must be after start time.");
+        return;
+      }
+
+      const payload = {
+        turf_id,
+        reason,
+        date: dateOnly.toISOString(),
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString()
+      };
+
+      try {
+        const res = await fetch("http://localhost:8080/admin/blockslot", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Failed to block slot");
+        }
+
+        alert("Slot blocked successfully!");
+        e.target.reset();
+        loadBlockedSlots();
+      } catch (err) {
+        alert("Error: " + err.message);
+        console.error(err);
+      }
+    });
+
+    async function loadBlockedSlots() {
+      try {
+        const res = await fetch("http://localhost:8080/admin/blockslot", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+        const slots = data["Blocked turfs"] || [];
+
+        const table = document.getElementById("blockedSlotsTable");
+        table.innerHTML = "";
+
+        slots.forEach((slot) => {
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>${slot.ID}</td>
+            <td>${slot.turf_id}</td>
+            <td>${new Date(slot.date).toLocaleDateString()}</td>
+            <td>${new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+            <td>${new Date(slot.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+            <td>${slot.reason}</td>
+            <td><button class="delete-btn" onclick="deleteSlot(${slot.ID})">Unblock</button></td>
+          `;
+          table.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Failed to load blocked slots:", err);
+      }
+    }
+
+    async function deleteSlot(id) {
+      if (!confirm("Are you sure you want to unblock this blocked slot?")) return;
+
+      try {
+        const res = await fetch(`http://localhost:8080/admin/blockslot/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Failed to delete slot");
+        }
+
+        alert("Slot deleted.");
+        loadBlockedSlots();
+      } catch (err) {
+        alert("Error: " + err.message);
+        console.error(err);
+      }
+    }
+
+    // Initial load
+    window.onload = loadBlockedSlots;
+  </script>
+</body>
+</html>

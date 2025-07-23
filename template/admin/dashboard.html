@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      display: flex;
+      background-color: #f4f7fa;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #2c3e50;
+      min-height: 100vh;
+      color: #ecf0f1;
+      padding: 20px 0;
+      position: fixed;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 25px;
+      color: #ecf0f1;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #34495e;
+    }
+    .main-content {
+      margin-left: 220px;
+      padding: 30px;
+      flex: 1;
+    }
+    .main-content h1 {
+      margin-bottom: 25px;
+    }
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .card h2 {
+      font-size: 2rem;
+      margin: 0;
+      color: #27ae60;
+    }
+    .card p {
+      margin: 0.5rem 0 0;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+ <div class="sidebar">
+  <h2>🏟️ Turf Admin</h2>
+  <a href="dashboard.html">📊 Dashboard</a>
+  <a href="turf.html">🌱 Turf Management</a>
+  <a href="bookings.html">📅 Bookings</a>
+  <a href="slots.html">🛑 Slot Control</a>
+  <a href="user_management.html">👤 Users</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
+</div>
+
+
+  <div class="main-content">
+    <h1>Dashboard Overview</h1>
+    <div class="stats-container">
+      <div class="card">
+        <h2 id="turfCount">0</h2>
+        <p>Total Turfs</p>
+      </div>
+      <div class="card">
+        <h2 id="bookingCount">0</h2>
+        <p>Total Bookings</p>
+      </div>
+      <div class="card">
+        <h2 id="userCount">0</h2>
+        <p>Total Users</p>
+      </div>
+      <div class="card">
+        <h2 id="blockedCount">0</h2>
+        <p>Blocked Slots</p>
+      </div>
+      <div class="card">
+        <h2 id="revenue">₹0</h2>
+        <p>Total Revenue</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchStats() {
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch("http://localhost:8080/admin/dashboardstats", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard stats");
+        }
+
+        const data = await response.json();        
+        document.getElementById("turfCount").innerText = data.total_turfs;
+        document.getElementById("bookingCount").innerText = data.total_bookings;
+        document.getElementById("userCount").innerText = data.total_users;
+        document.getElementById("blockedCount").innerText = data.blocked_slots;
+        document.getElementById("revenue").innerText = `₹${data.revenue}`;
+      } catch (error) {
+        console.error("Error loading stats:", error);
+        alert("Unable to load dashboard statistics.");
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = "/static/login.html";
+    }
+
+    fetchStats();
+  </script>
+
+</body>
+</html>

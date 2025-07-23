@@ -1,7 +1,7 @@
-package public
+package user
 
 import (
-	"BookMyTurf/config"
+	"BookMyTurf/db"
 	"BookMyTurf/models"
 	"net/http"
 
@@ -14,7 +14,7 @@ func GetAllTurfs(c *gin.Context) {
 
 	var turfs []models.Turf
 
-	if err := config.DB.Find(&turfs).Error; err != nil {
+	if err := db.DB.Find(&turfs).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to fetch turfs",
 		})

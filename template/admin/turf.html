@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Turf Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+    input {
+      padding: 8px;
+      width: 200px;
+    }
+    button {
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    
+    
+  </style>
+</head>
+<body>
+
+  
+  <h1>🏟️ Turf Management</h1>
+
+  <!-- Add Turf Form -->
+  <form id="addTurfForm">
+    <input type="text" id="name" placeholder="Turf Name" required />
+    <input type="text" id="location" placeholder="Location" required />
+    <input type="number" id="price" placeholder="Price" required />
+    <button type="submit">Add Turf</button>
+  </form>
+
+  <!-- Turf Table -->
+  <table id="turfTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Location</th>
+        <th>Price</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem("access_token");
+
+    // Load and display turfs
+    async function loadTurfs() {
+      const res = await fetch("http://localhost:8080/turfs", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      const turfs = data.turfs;
+
+      const tbody = document.querySelector("#turfTable tbody");
+      tbody.innerHTML = "";
+
+      turfs.forEach(turf => {
+        console.log(turf.ID);
+        
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${turf.ID}</td>
+          <td><input type="text" value="${turf.name}" id="name-${turf.ID}" /></td>
+          <td><input type="text" value="${turf.location}" id="location-${turf.ID}" /></td>
+          <td><input type="number" value="${turf.price}" id="price-${turf.ID}" /></td>
+          <td>
+            <button onclick="updateTurf(${turf.ID})">Update</button>
+            <button onclick="deleteTurf(${turf.ID})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Add Turf
+    document.getElementById("addTurfForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const turf = {
+        name: document.getElementById("name").value,
+        location: document.getElementById("location").value,
+        price: parseInt(document.getElementById("price").value),
+      };
+
+      await fetch("http://localhost:8080/admin/turf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(turf)
+      });
+
+      e.target.reset();
+      loadTurfs();
+    });
+
+    // Update Turf
+    async function updateTurf(id) {
+      const turf = {
+        name: document.getElementById(`name-${id}`).value,
+        location: document.getElementById(`location-${id}`).value,
+        price: parseInt(document.getElementById(`price-${id}`).value)
+      };
+
+      await fetch(`http://localhost:8080/admin/turf/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(turf)
+      });
+
+      loadTurfs();
+    }
+
+    // Delete Turf
+    async function deleteTurf(id) {
+      await fetch(`http://localhost:8080/admin/turf/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      loadTurfs();
+    }
+
+    // Initial load
+    loadTurfs();
+  </script>
+</body>
+</html>

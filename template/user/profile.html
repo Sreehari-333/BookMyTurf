@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/static/user/profile.css">
+  <link rel="stylesheet" href="/static/user/style.css">
+</head>
+<body>
+  <h2>Your Profile</h2>
+<p><strong>Name:</strong> <span id="userName"></span></p>
+<p><strong>Email:</strong> <span id="userEmail"></span></p>
+
+<script>
+  window.onload = () => {
+    fetch("/user/profile", {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("access_token"),
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById("userName").textContent = data.name;
+        document.getElementById("userEmail").textContent = data.email;
+      })
+      .catch((err) => console.error("Failed to load profile:", err));
+  };
+</script>
+</body>
+</html>

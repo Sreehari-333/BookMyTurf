@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"BookMyTurf/config"
+	"BookMyTurf/db"
 	"BookMyTurf/models"
 	"net/http"
 
@@ -9,20 +9,24 @@ import (
 )
 
 func Logout(c *gin.Context) {
-	var req struct {
-		RefreshToken string `json:"refresh_token" binding:"required"`
-	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "refresh token required"})
+	//  Reading Refresh Token from cookie
+
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh token missing in cookie"})
 		return
 	}
 
-	// Delete refresh token from DB
-	if err := config.DB.Where("token = ?", req.RefreshToken).Delete(&models.RefreshToken{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to logout"})
+	//  Delete Refresh Token from DB
+
+	err = db.DB.Where("token = ?", refreshToken).Delete(&models.RefreshToken{}).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
 		return
 	}
+
+	c.SetCookie("refresh_token", "", -1, "/", "localhost", false, true) //  Clearing cookie
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }

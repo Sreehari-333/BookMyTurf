@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Turfs</title>
+    <link rel="stylesheet" href="/static/user/search.css" />
+    <link rel="stylesheet" href="/static/user/style.css" />
+  </head>
+  <body>
+    <h2>Search Turfs</h2>
+    <form id="searchForm">
+      <label>Location: <input type="text" name="location" required /></label>
+      <label>Date: <input type="date" name="date" required /></label>
+      <label
+        >Start Time: <input type="time" name="start_time" required
+      /></label>
+      <label>End Time: <input type="time" name="end_time" required /></label>
+      <button type="submit">Search</button>
+    </form>
+    <div id="searchResults"></div>
+
+    <script>
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const location = formData.get("location");
+          const date = formData.get("date");
+          const start = formData.get("start_time");
+          const end = formData.get("end_time");
+
+          const resultDiv = document.getElementById("searchResults");
+          resultDiv.innerHTML = "<p>Searching...</p>";
+
+          try {
+            const res = await fetch(
+              `/turfs/search?location=${location}&date=${date}&start_time=${start}&end_time=${end}`
+            );
+            const data = await res.json();
+
+            resultDiv.innerHTML = "<h3>Available Turfs:</h3>";
+
+            if (!data || data.length === 0) {
+              resultDiv.innerHTML +=
+                "<p>No turfs available for the selected time and location.</p>";
+              return;
+            }
+
+            data.forEach((turf) => {
+              resultDiv.innerHTML += `
+              <div class="turf-card">
+                <div>
+                  <strong>${turf.name}</strong><br/>
+                  <span>${turf.location}</span>
+                </div>
+                <button onclick="bookTurf(${turf.ID}, '${date}', '${start}', '${end}')">Book</button>
+              </div>`;
+            });
+          } catch (err) {
+            console.error("Search failed:", err);
+            resultDiv.innerHTML =
+              "<p>Error searching turfs. Try again later.</p>";
+          }
+        });
+
+      async function bookTurf(turfId, date, start, end) {
+        const userId = localStorage.getItem("user_id");
+
+        if (!userId) {
+          alert("User not logged in.");
+          return;
+        }
+
+        const startTimeISO = new Date(`${date}T${start}`).toISOString();
+        const endTimeISO = new Date(`${date}T${end}`).toISOString();
+
+        try {
+          const res = await fetch("/user/bookings", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            body: JSON.stringify({
+              user_id: parseInt(userId),
+              turf_id: turfId,
+              date: date,
+              start_time: startTimeISO,
+              end_time: endTimeISO,
+              status: "booked",
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            alert("Booking successful!");
+          } else {
+            alert(data.error || "Failed to book turf.");
+          }
+        } catch (err) {
+          console.error("Booking error:", err);
+          alert("Something went wrong. Please try again.");
+        }
+      }
+    </script>
+  </body>
+</html>

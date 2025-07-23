@@ -1,7 +1,7 @@
 package routes
 
 import (
-	publicController "BookMyTurf/controllers/public"
+	publicController "BookMyTurf/controllers/user"
 	"github.com/gin-gonic/gin"
 )
 

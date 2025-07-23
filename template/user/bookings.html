@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/static/user/style.css">
+  <link rel="stylesheet" href="/static/user/bookings.css">
+</head>
+<body>
+  <h2>Booking History</h2>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Turf</th>
+      <th>Date</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Status</th>
+      <th>Cancel</th>
+    </tr>
+  </thead>
+  <tbody id="bookingTable">
+    <tr>
+      <td colspan="6">Loading bookings...</td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  window.onload = loadBookingHistory;
+
+  function formatTime(timeStr) {
+    const date = new Date(timeStr);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function loadBookingHistory() {
+    fetch("/user/bookings", {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("access_token"),
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const table = document.getElementById("bookingTable");
+        table.innerHTML = "";
+
+        if (!data.Bookings || data.Bookings.length === 0) {
+          table.innerHTML =
+            '<tr><td colspan="6">No bookings found.</td></tr>';
+          return;
+        }
+
+        data.Bookings.forEach((b) => {
+          const row = `
+            <tr>
+              <td>${b.turf.name}</td>
+              <td>${b.date}</td>
+              <td>${formatTime(b.start_time)}</td>
+              <td>${formatTime(b.end_time)}</td>
+              <td>${b.status || "Booked"}</td>
+              <td><button onclick="cancelBooking(${b.ID})">Cancel</button></td>
+            </tr>`;
+          table.innerHTML += row;
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to load bookings:", err);
+        document.getElementById("bookingTable").innerHTML =
+          '<tr><td colspan="6">Error loading bookings</td></tr>';
+      });
+  }
+
+  function cancelBooking(bookingId) {
+    if (!confirm("Are you sure you want to cancel this booking?")) return;
+
+    fetch(`/user/bookings/${bookingId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("access_token"),
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          alert("Booking cancelled");
+          loadBookingHistory();
+        } else {
+          alert("Failed to cancel booking");
+        }
+      })
+      .catch((err) => {
+        console.error("Error cancelling booking:", err);
+        alert("Something went wrong");
+      });
+  }
+</script>
+
+</body>
+</html>

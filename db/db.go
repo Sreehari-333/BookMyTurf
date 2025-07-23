@@ -1,4 +1,4 @@
-package config
+package db
 
 import (
 	"BookMyTurf/models"
@@ -37,7 +37,7 @@ func ConnectDB() {
 
 	// Migrating tables
 
-	err = DB.AutoMigrate(&models.User{}, &models.Turf{}, &models.Booking{}, &models.RefreshToken{})
+	err = DB.AutoMigrate(&models.User{}, &models.Turf{}, &models.Booking{}, &models.RefreshToken{}, &models.BlockedSlot{})
 
 	if err != nil {
 		log.Fatal("error with creating table", err)

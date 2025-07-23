@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"BookMyTurf/config"
+	"BookMyTurf/db"
 	"BookMyTurf/models"
 	"net/http"
 
@@ -48,7 +48,7 @@ func Register(c *gin.Context) {
 
 	// creating user
 
-	err = config.DB.Create(&user).Error
+	err = db.DB.Create(&user).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

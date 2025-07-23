@@ -6,15 +6,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// Creating struct for Booking details
-
 type Booking struct {
 	gorm.Model
-	UserId    uint      `json:"user_id"`
-	User      User      `gorm:"foreignKey=UserId" json:"-" binding:"-"`
-	TurfId    uint      `json:"turf_id"`
-	Turf      Turf      `gorm:"foreignKey=TurfId" json:"-" binding:"-"`
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
+	UserId    uint      `json:"user_id" binding:"required"`
+	User      User      `gorm:"foreignKey:UserId" json:"user" binding:"-"`
+	TurfId    uint      `json:"turf_id" binding:"required"`
+	Turf      Turf      `gorm:"foreignKey:TurfId" json:"turf" binding:"-"`
+	StartTime time.Time `json:"start_time" binding:"required"`
+	EndTime   time.Time `json:"end_time" binding:"required"`
+	Date      string    `json:"date" binding:"required"`
 	Status    string    `json:"status"`
 }

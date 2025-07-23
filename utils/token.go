@@ -1,9 +1,11 @@
 package utils
 
 import (
-	jwtLib "github.com/golang-jwt/jwt/v5"
 	"os"
 	"time"
+
+	jwtLib "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type Claims struct {
@@ -39,18 +41,19 @@ func GenerateAccessToken(userId uint, userName string, role int) (string, error)
 // Generating Refresh Token
 
 func GenerateRefreshToken(userId uint) (string, error) {
-
 	expirationTime := time.Now().Add(7 * 24 * time.Hour)
+
+	jwtId := uuid.New().String() // generating a unique token ID
 
 	claims := Claims{
 		UserId: userId,
 		RegisteredClaims: jwtLib.RegisteredClaims{
 			ExpiresAt: jwtLib.NewNumericDate(expirationTime),
 			IssuedAt:  jwtLib.NewNumericDate(time.Now()),
+			ID:        jwtId,
 		},
 	}
 
 	token := jwtLib.NewWithClaims(jwtLib.SigningMethodHS256, claims)
-
 	return token.SignedString(secret)
 }
