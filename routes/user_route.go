@@ -3,6 +3,8 @@ package routes
 import (
 	publicControllers "BookMyTurf/controllers/user"
 	"BookMyTurf/middleware"
+	"BookMyTurf/services"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,10 +14,10 @@ func UserRoutes(router *gin.Engine) {
 
 	user := router.Group("/user")
 	user.Use(middleware.AuthMiddleware())
-	user.POST("/bookings", publicControllers.BookTurf)
-	user.GET("/bookings", publicControllers.GetMyBookings)
-	user.DELETE("/bookings/:id", publicControllers.CancelBooking)
+	user.POST("/bookings", services.BookTurf)
+	user.GET("/bookings", services.GetMyBookings)
+	user.DELETE("/bookings/:id", services.CancelBooking)
 	user.GET("/profile", publicControllers.GetProfile)
 	user.PUT("/profile", publicControllers.UpdateProfile)
-	user.GET("/checkslots", publicControllers.GetAvailableSlots)
+	user.GET("/checkslots", services.GetAvailableSlots)
 }

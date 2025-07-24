@@ -1,4 +1,4 @@
-package user
+package services
 
 import (
 	"BookMyTurf/db"
@@ -126,58 +126,6 @@ func GetMyBookings(c *gin.Context) {
 		"UserId":   userId,
 	})
 }
-
-// Cancel Booking
-
-// func CancelBooking(c *gin.Context) {
-// 	bookingId := c.Param("id")
-
-// 	userIdVal, exist := c.Get("user_id")
-// 	if !exist {
-// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-// 		return
-// 	}
-// 	userId := userIdVal.(uint)
-
-// 	// Fetch the booking with related User and Turf
-// 	var booking models.Booking
-// 	if err := db.DB.Preload("User").Preload("Turf").
-// 		First(&booking, "id = ? AND user_id = ?", bookingId, userId).Error; err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "booking not found"})
-// 		return
-// 	}
-
-// 	// Check if already cancelled
-// 	if booking.Status == "cancelled" {
-// 		c.JSON(http.StatusConflict, gin.H{"error": "booking is already cancelled"})
-// 		return
-// 	}
-
-// 	// Prevent cancelling past or ongoing bookings
-// 	now := time.Now()
-// 	bookingDate, err := time.Parse("2006-01-02", booking.Date)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid booking date format"})
-// 		return
-// 	}
-// 	if bookingDate.Before(now) || (bookingDate.Equal(now) && booking.EndTime.Before(now)) {
-// 		c.JSON(http.StatusForbidden, gin.H{"error": "cannot cancel past or ongoing bookings"})
-// 		return
-// 	}
-
-// 	// Update booking status to "cancelled"
-// 	booking.Status = "cancelled"
-// 	if err := db.DB.Save(&booking).Error; err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update booking status"})
-// 		return
-// 	}
-
-// 	// Return full booking details after cancellation
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"message": "booking cancelled successfully",
-// 		"booking": booking,
-// 	})
-// }
 
 func CancelBooking(c *gin.Context) {
 	// Parse booking ID from URL
