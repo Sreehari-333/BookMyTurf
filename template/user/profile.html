@@ -1,31 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <link rel="stylesheet" href="/static/user/profile.css">
-  <link rel="stylesheet" href="/static/user/style.css">
-</head>
-<body>
-  <h2>Your Profile</h2>
-<p><strong>Name:</strong> <span id="userName"></span></p>
-<p><strong>Email:</strong> <span id="userEmail"></span></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile</title>
+    <link rel="stylesheet" href="/static/user/profile.css" />
+    <link rel="stylesheet" href="/static/user/style.css" />
+  </head>
+  <body>
+    <h2>Your Profile</h2>
 
-<script>
-  window.onload = () => {
-    fetch("/user/profile", {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("access_token"),
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        document.getElementById("userName").textContent = data.name;
-        document.getElementById("userEmail").textContent = data.email;
-      })
-      .catch((err) => console.error("Failed to load profile:", err));
-  };
-</script>
-</body>
+    <div id="profileDisplay">
+      <p><strong>Name:</strong> <span id="userName"></span></p>
+      <p><strong>Email:</strong> <span id="userEmail"></span></p>
+      <button onclick="enableEdit()">Update Profile</button>
+    </div>
+
+    <div id="profileEdit" style="display: none">
+      <p><strong>Name:</strong> <input type="text" id="editName" /></p>
+      <p><strong>Email:</strong> <input type="email" id="editEmail" /></p>
+      <button onclick="saveProfile()">Save</button>
+      <button onclick="cancelEdit()">Cancel</button>
+    </div>
+
+    <script>
+      let userData = {};
+
+      window.onload = () => {
+        fetch("/user/profile", {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            userData = data;
+            document.getElementById("userName").textContent = data.name;
+            document.getElementById("userEmail").textContent = data.email;
+          })
+          .catch((err) => console.error("Failed to load profile:", err));
+      };
+
+      function enableEdit() {
+        document.getElementById("editName").value = userData.name;
+        document.getElementById("editEmail").value = userData.email;
+        document.getElementById("profileDisplay").style.display = "none";
+        document.getElementById("profileEdit").style.display = "block";
+      }
+
+      function cancelEdit() {
+        document.getElementById("profileDisplay").style.display = "block";
+        document.getElementById("profileEdit").style.display = "none";
+      }
+
+      function saveProfile() {
+        const updatedData = {
+          name: document.getElementById("editName").value,
+          email: document.getElementById("editEmail").value,
+        };
+
+        fetch("/user/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+          body: JSON.stringify(updatedData),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Failed to update profile");
+            return res.json();
+          })
+          .then((data) => {
+            // Use updated data from server response
+            userData.name = data.name;
+            userData.email = data.email;
+
+            // Update DOM
+            document.getElementById("userName").textContent = data.name;
+            document.getElementById("userEmail").textContent = data.email;
+
+            alert("Profile updated successfully!");
+
+            cancelEdit();
+          })
+
+          .catch((err) => alert("Update failed: " + err.message));
+      }
+    </script>
+  </body>
 </html>

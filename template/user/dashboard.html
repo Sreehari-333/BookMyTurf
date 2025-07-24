@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -18,5 +18,129 @@
     <div id="content">
       <p>Select a section to get started.</p>
     </div>
+  </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BookMyTurf</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f2f5f9;
+        color: #333;
+      }
+
+      header {
+        background-color: #0b5ed7;
+        color: white;
+        padding: 1rem 2rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .tagline {
+        margin: 0.3rem 0 0;
+        font-size: 1rem;
+        font-weight: 300;
+      }
+
+      nav {
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #ddd;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+
+      nav a {
+        text-decoration: none;
+        color: #0b5ed7;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      nav a:hover {
+        color: #06397c;
+      }
+
+      main {
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+      }
+
+      .card {
+        background-color: white;
+        padding: 2rem 3rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        text-align: center;
+      }
+
+      footer {
+        background-color: #f8f9fa;
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.9rem;
+        color: #666;
+        border-top: 1px solid #e4e4e4;
+      }
+
+      @media (max-width: 600px) {
+        nav {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .card {
+          padding: 1.5rem;
+          width: 100%;
+        }
+
+        main {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>BookMyTurf</h1>
+      <p class="tagline">Book. Play. Repeat.</p>
+    </header>
+
+    <nav>
+      <a href="/static/user/search.html">🏟️ Search Turfs</a>
+        <a href="/static/user/turf_booking.html">📆 Book Turf</a>
+      <a href="/static/user/profile.html">👤 Profile</a>
+      <a href="/static/user/bookings.html">📅 Booking History</a>
+      <a href="#" onclick="logout()">🚪 Logout</a>
+    </nav>
+
+    <main id="content">
+      <div class="card">
+        <h2>Welcome to your dashboard!</h2>
+        <p>Select an option above to manage your bookings.</p>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 BookMyTurf. All rights reserved.</p>
+    </footer>
+
+    <script>
+      function logout() {
+        localStorage.clear();
+        window.location.href = "/static/login.html";
+      }
+    </script>
   </body>
 </html>

@@ -46,6 +46,8 @@
     })
       .then((res) => res.json())
       .then((data) => {
+        // console.log(data);
+        
         const table = document.getElementById("bookingTable");
         table.innerHTML = "";
 
@@ -56,6 +58,8 @@
         }
 
         data.Bookings.forEach((b) => {
+          console.log(b);
+          
           const row = `
             <tr>
               <td>${b.turf.name}</td>
@@ -76,27 +80,36 @@
   }
 
   function cancelBooking(bookingId) {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
+  if (!confirm("Are you sure you want to cancel this booking?")) return;
 
-    fetch(`/user/bookings/${bookingId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("access_token"),
-      },
-    })
-      .then((res) => {
-        if (res.ok) {
-          alert("Booking cancelled");
-          loadBookingHistory();
-        } else {
-          alert("Failed to cancel booking");
+  fetch(`/user/bookings/${bookingId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("access_token"),
+    },
+  })
+    .then((res) => {
+      if (res.ok) {
+        alert("Booking cancelled");
+
+        // Update button and status in the same row
+        const btn = document.querySelector(`button[onclick="cancelBooking(${bookingId})"]`);
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Cancelled";
+          const statusCell = btn.parentElement.previousElementSibling;
+          if (statusCell) statusCell.textContent = "Cancelled";
         }
-      })
-      .catch((err) => {
-        console.error("Error cancelling booking:", err);
-        alert("Something went wrong");
-      });
-  }
+      } else {
+        alert("Failed to cancel booking");
+      }
+    })
+    .catch((err) => {
+      console.error("Error cancelling booking:", err);
+      alert("Something went wrong");
+    });
+}
+
 </script>
 
 </body>

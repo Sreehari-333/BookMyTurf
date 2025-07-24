@@ -37,99 +37,218 @@
       background-color: #4CAF50;
       color: white;
     }
-
-    
-      
-    
+    .update-btn {
+      background-color: #ffc107;
+      color: black;
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .close-btn {
+      float: right;
+      cursor: pointer;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
 
- 
-  <h1>User Management</h1>
-  <table id="userTable">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Blocked</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="userTableBody">
-      <!-- User rows will be populated here -->
-    </tbody>
-  </table>
+<h1>User Management</h1>
 
-  <script>
-    const token = localStorage.getItem("access_token");
+<!-- Create User Form -->
+<section style="margin: 20px; background: white; padding: 20px; border-radius: 8px;">
+  <h2>Create New User</h2>
+  <form id="createUserForm">
+    <label>
+      Name:
+      <input type="text" id="name" required />
+    </label>
+    <label style="margin-left: 10px">
+      Email:
+      <input type="email" id="email" required />
+    </label>
+    <label style="margin-left: 10px">
+      Password:
+      <input type="password" id="password" required />
+    </label>
+    <button type="submit" style="margin-left: 10px; background-color: #007bff; color: white;">Create</button>
+  </form>
+</section>
 
-    async function fetchUsers() {
-      const res = await fetch("http://localhost:8080/admin/users", {
-        headers: {
-          "Authorization": "Bearer " + token
-        }
-      });
-      const users = await res.json();
-      populateTable(users);
+<table id="userTable">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Blocked</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="userTableBody"></tbody>
+</table>
+
+<!-- Update Modal -->
+<div class="modal" id="updateModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h3>Update User</h3>
+    <form id="updateUserForm">
+      <input type="hidden" id="updateUserId" />
+      <label>Name:</label>
+      <input type="text" id="updateName" required />
+      <label>Email:</label>
+      <input type="email" id="updateEmail" required />
+      <button type="submit" style="background-color: #28a745; color: white;">Update</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem("access_token");
+
+  async function fetchUsers() {
+    const res = await fetch("http://localhost:8080/admin/users", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    const users = await res.json();
+    populateTable(users);
+  }
+
+  function populateTable(users) {
+    const tbody = document.getElementById("userTableBody");
+    tbody.innerHTML = "";
+
+    users.forEach(user => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${user.ID}</td>
+        <td>${user.name}</td>
+        <td>${user.email}</td>
+        <td>${user.Blocked ? "Yes" : "No"}</td>
+        <td>
+          ${user.Blocked
+            ? `<button class="unblock-btn" onclick="unblockUser(${user.ID})">Unblock</button>`
+            : `<button class="block-btn" onclick="blockUser(${user.ID})">Block</button>`}
+          <button class="update-btn" onclick="openUpdateModal(${user.ID}, '${user.name}', '${user.email}')">Update</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function blockUser(userId) {
+    const res = await fetch(`http://localhost:8080/admin/users/block/${userId}`, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    res.ok ? fetchUsers() : alert("Failed to block user");
+  }
+
+  async function unblockUser(userId) {
+    const res = await fetch(`http://localhost:8080/admin/users/unblock/${userId}`, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    res.ok ? fetchUsers() : alert("Failed to unblock user");
+  }
+
+  document.getElementById("createUserForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const payload = { name, email, password };
+
+    const res = await fetch("http://localhost:8080/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("User created successfully.");
+      fetchUsers();
+      e.target.reset();
+    } else {
+      alert("Failed: " + (data.error || "Unknown error"));
     }
+  });
 
-    function populateTable(users) {
-      const tbody = document.getElementById("userTableBody");
-      tbody.innerHTML = "";
-console.log(users);
+  function openUpdateModal(id, name, email) {
+    document.getElementById("updateUserId").value = id;
+    document.getElementById("updateName").value = name;
+    document.getElementById("updateEmail").value = email;
+    document.getElementById("updateModal").style.display = "flex";
+  }
 
-      users.forEach(user => {
-        const tr = document.createElement("tr");
+  function closeModal() {
+    document.getElementById("updateModal").style.display = "none";
+  }
 
-        tr.innerHTML = `
-          <td>${user.ID}</td>
-          <td>${user.name}</td>
-          <td>${user.email}</td>
-          <td>${user.Blocked ? "Yes" : "No"}</td>
-          <td>
-            ${user.Blocked
-              ? `<button class="unblock-btn" onclick="unblockUser(${user.ID})">Unblock</button>`
-              : `<button class="block-btn" onclick="blockUser(${user.ID})">Block</button>`}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+  
+  document.getElementById("updateUserForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    async function blockUser(userId) {
-      const res = await fetch(`http://localhost:8080/admin/users/block/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": "Bearer " + token
-        }
-      });
-      if (res.ok) {
-        alert("User blocked successfully");
-        fetchUsers();
-      } else {
-        alert("Failed to block user");
-      }
-    }
+  const id = document.getElementById("updateUserId").value;
+  const name = document.getElementById("updateName").value.trim();
+  const email = document.getElementById("updateEmail").value.trim();
 
-    async function unblockUser(userId) {
-      const res = await fetch(`http://localhost:8080/admin/users/unblock/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": "Bearer " + token
-        }
-      });
-      if (res.ok) {
-        alert("User unblocked successfully");
-        fetchUsers();
-      } else {
-        alert("Failed to unblock user");
-      }
-    }
+  const payload = {
+    user_id: Number(id), // ✅ field name fixed
+    name,
+    email
+  };
 
-    // Initial load
+  const res = await fetch("http://localhost:8080/admin/users/update", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await res.json();
+
+  if (res.ok) {
+    alert("User updated successfully.");
+    closeModal();
     fetchUsers();
-  </script>
+  } else {
+    alert("Failed to update: " + (result.error || result.details || "Unknown error"));
+  }
+});
+
+
+  // Initial load
+  fetchUsers();
+</script>
+
 </body>
 </html>

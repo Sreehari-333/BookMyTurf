@@ -16,4 +16,6 @@ func UserRoutes(router *gin.Engine) {
 	user.GET("/bookings", publicControllers.GetMyBookings)
 	user.DELETE("/bookings/:id", publicControllers.CancelBooking)
 	user.GET("/profile", publicControllers.GetProfile)
+	user.PUT("/profile", publicControllers.UpdateProfile)
+	user.GET("/checkslots", publicControllers.GetAvailableSlots)
 }

@@ -70,95 +70,142 @@
   </table>
 
   <script>
-    const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("access_token");
 
-    // Load and display turfs
-    async function loadTurfs() {
-      const res = await fetch("http://localhost:8080/turfs", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const data = await res.json();
-      
-      const turfs = data.turfs;
+  // Load and display turfs
+  async function loadTurfs() {
+  const res = await fetch("http://localhost:8080/turfs", {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
 
-      const tbody = document.querySelector("#turfTable tbody");
-      tbody.innerHTML = "";
+  const data = await res.json();
+  const turfs = data.turfs;
+  const tbody = document.querySelector("#turfTable tbody");
+  tbody.innerHTML = "";
 
-      turfs.forEach(turf => {
-        console.log(turf.ID);
-        
-        
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${turf.ID}</td>
-          <td><input type="text" value="${turf.name}" id="name-${turf.ID}" /></td>
-          <td><input type="text" value="${turf.location}" id="location-${turf.ID}" /></td>
-          <td><input type="number" value="${turf.price}" id="price-${turf.ID}" /></td>
-          <td>
-            <button onclick="updateTurf(${turf.ID})">Update</button>
-            <button onclick="deleteTurf(${turf.ID})">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
+  turfs.forEach(turf => {
+    const row = document.createElement("tr");
+    row.setAttribute("id", `row-${turf.ID}`);
+    row.innerHTML = `
+      <td>${turf.ID}</td>
+      <td class="name">${turf.name}</td>
+      <td class="location">${turf.location}</td>
+      <td class="price">${turf.price}</td>
+      <td>
+        <button onclick="enableEdit(${turf.ID})" id="btn-${turf.ID}">Update</button>
+        <button onclick="deleteTurf(${turf.ID})">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
 
-    // Add Turf
-    document.getElementById("addTurfForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const turf = {
-        name: document.getElementById("name").value,
-        location: document.getElementById("location").value,
-        price: parseInt(document.getElementById("price").value),
-      };
+function enableEdit(id) {
+  const row = document.getElementById(`row-${id}`);
+  const name = row.querySelector(".name").innerText;
+  const location = row.querySelector(".location").innerText;
+  const price = row.querySelector(".price").innerText;
 
-      await fetch("http://localhost:8080/admin/turf", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(turf)
-      });
+  
 
-      e.target.reset();
-      loadTurfs();
+  row.querySelector(".name").innerHTML = `<input type="text" id="edit-name-${id}" value="${name}" />`;
+  row.querySelector(".location").innerHTML = `<input type="text" id="edit-location-${id}" value="${location}" />`;
+  row.querySelector(".price").innerHTML = `<input type="number" id="edit-price-${id}" value="${price}" />`;
+
+  const updateBtn = document.getElementById(`btn-${id}`);
+  updateBtn.innerText = "Save";
+  updateBtn.onclick = () => updateTurf(id);
+}
+
+async function updateTurf(id) {
+  const turf = {
+    name: document.getElementById(`edit-name-${id}`).value,
+    location: document.getElementById(`edit-location-${id}`).value,
+    price: parseInt(document.getElementById(`edit-price-${id}`).value)
+  };
+
+  const res = await fetch(`http://localhost:8080/admin/turf/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(turf)
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    alert("Update failed: " + errText);
+    return;
+  }
+
+  loadTurfs(); 
+}
+
+
+  // Update Turf
+  async function updateTurf(id) {
+    const turf = {
+      name: document.getElementById(`edit-name-${id}`).value.trim(),
+      location: document.getElementById(`edit-location-${id}`).value.trim(),
+      price: parseInt(document.getElementById(`edit-price-${id}`).value)
+    };
+
+    const res = await fetch(`http://localhost:8080/admin/turf/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(turf)
     });
 
-    // Update Turf
-    async function updateTurf(id) {
-      const turf = {
-        name: document.getElementById(`name-${id}`).value,
-        location: document.getElementById(`location-${id}`).value,
-        price: parseInt(document.getElementById(`price-${id}`).value)
-      };
-
-      await fetch(`http://localhost:8080/admin/turf/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(turf)
-      });
-
-      loadTurfs();
+    if (!res.ok) {
+      alert("Update failed!");
+      return;
     }
 
-    // Delete Turf
-    async function deleteTurf(id) {
-      await fetch(`http://localhost:8080/admin/turf/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      loadTurfs();
-    }
-
-    // Initial load
+    // Reload turfs after saving
     loadTurfs();
-  </script>
+  }
+
+  // Add Turf
+  document.getElementById("addTurfForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const turf = {
+      name: document.getElementById("name").value,
+      location: document.getElementById("location").value,
+      price: parseInt(document.getElementById("price").value),
+    };
+
+    await fetch("http://localhost:8080/admin/turf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(turf)
+    });
+
+    e.target.reset();
+    loadTurfs();
+  });
+
+  // Delete Turf
+  async function deleteTurf(id) {
+    await fetch(`http://localhost:8080/admin/turf/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    loadTurfs();
+  }
+
+  // Initial load
+  loadTurfs();
+</script>
+
 </body>
 </html>

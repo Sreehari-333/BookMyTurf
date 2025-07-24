@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Turf - Calendar</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f9fafb;
+        margin: 0;
+        padding: 2rem;
+        color: #333;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        font-size: 1.8rem;
+        color: #1f2937;
+      }
+
+      #calendar {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      #turf-select-container {
+        display: none;
+        text-align: center;
+        margin-top: 2rem;
+        background: #ffffff;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      label {
+        font-weight: 500;
+        font-size: 1rem;
+        color: #374151;
+      }
+
+      select {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        margin-left: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #f9fafb;
+        color: #111827;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+      }
+
+      .fc .fc-toolbar-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      .fc-button {
+        background-color: #3b82f6 !important;
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 0.4rem 0.75rem !important;
+        font-size: 0.85rem !important;
+      }
+
+      .fc-button:hover {
+        background-color: #2563eb !important;
+      }
+
+      .fc-button:disabled {
+        background-color: #9ca3af !important;
+      }
+
+      .fc-event {
+        background-color: #10b981 !important;
+        border: none !important;
+        font-size: 0.75rem;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+
+      .fc-daygrid-day-number {
+        font-weight: 500;
+        color: #4b5563;
+      }
+
+      .fc-daygrid-day:hover {
+        background-color: #f3f4f6;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📅 Book Your Turf Slot</h2>
+
+    <div id="calendar"></div>
+
+    <div id="turf-select-container">
+      <label for="turf-select"><strong>Select Turf:</strong></label>
+      <select id="turf-select">
+        <option disabled selected>Select a turf</option>
+      </select>
+    </div>
+
+    <script>
+      let userId = null;
+document.addEventListener("DOMContentLoaded", async function () {
+  const baseUrl = "http://localhost:8080";
+  const turfSelect = document.getElementById("turf-select");
+  const turfContainer = document.getElementById("turf-select-container");
+  let selectedDate = "";
+  let userId = null;
+
+  await fetchUserId();
+
+  const calendarEl = document.getElementById("calendar");
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: "dayGridMonth",
+    selectable: true,
+    headerToolbar: {
+      left: "prev,next today",
+      center: "title",
+      right: "dayGridMonth,timeGridWeek,timeGridDay",
+    },
+    validRange: (nowDate) => ({
+      start: nowDate.toISOString().split("T")[0],
+    }),
+    dateClick: function (info) {
+      selectedDate = info.dateStr;
+      loadTurfs();
+      turfContainer.style.display = "block";
+      calendar.removeAllEvents();
+    },
+  });
+
+  calendar.render();
+
+      // Load turfs
+      async function loadTurfs() {
+        try {
+          const res = await fetch(`${baseUrl}/turfs`);
+          const data = await res.json();
+          turfSelect.innerHTML =
+            "<option disabled selected>Select a turf</option>";
+
+          data.turfs.forEach((turf) => {
+            const option = document.createElement("option");
+            option.value = turf.ID;
+            option.textContent = turf.name;
+            turfSelect.appendChild(option);
+          });
+        } catch (err) {
+          console.error("Failed to fetch turfs", err);
+          turfSelect.innerHTML = "<option>Error loading turfs</option>";
+        }
+      }
+
+      // On turf selection
+      turfSelect.addEventListener("change", async function () {
+        const turfId = this.value;
+        if (!selectedDate) return;
+
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          alert("You are not logged in. Please log in again.");
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            `${baseUrl}/user/checkslots?turf_id=${turfId}&date=${selectedDate}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (res.status === 401) {
+            alert("Session expired or unauthorized. Please login again.");
+            // Optionally redirect to login
+            return;
+          }
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            console.error("API error:", errorData);
+            alert("Failed to fetch slots. Please try again later.");
+            return;
+          }
+
+          const result = await res.json();
+          console.log(result.available_slots);
+
+          const availableSlots = result.available_slots.map((slot) => ({
+            title: "Available",
+            start: `${selectedDate}T${slot.start_time}`,
+            end: `${selectedDate}T${slot.end_time}`,
+            extendedProps: { turfId: turfId },
+          }));
+
+          calendar.removeAllEvents();
+          calendar.addEventSource(availableSlots);
+
+          calendar.setOption("eventClick", function (info) {
+            const confirmBooking = confirm(
+              `Book this slot?\nStart: ${info.event.start}\nEnd: ${info.event.end}`
+            );
+            if (confirmBooking) {
+              bookSlot(info.event);
+            }
+          });
+        } catch (err) {
+          console.error("Failed to fetch available slots:", err);
+          alert("Could not fetch slots due to a network error.");
+        }
+      });
+
+      function fetchUserId() {
+        return fetch("/user/profile", {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Failed to fetch profile");
+            }
+            return res.json();
+          })
+          .then((data) => {
+            userId = data.id;
+            console.log("User ID fetched:", userId);
+          })
+          .catch((err) => {
+            console.error("Failed to fetch user ID:", err);
+          });
+      }
+
+      // Book the selected slot
+      async function bookSlot(event) {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          alert("Login required to book a slot.");
+          return;
+        }
+
+        if (!userId) {
+          alert("User ID is not available. Please reload the page.");
+          return;
+        }
+
+        const payload = {
+          user_id: userId, // ✅ Include user_id
+          turf_id: parseInt(event.extendedProps.turfId),
+          date: event.start.toISOString().split("T")[0],
+          start_time: event.start.toISOString(),
+          end_time: event.end.toISOString(),
+        };
+
+        try {
+          const res = await fetch(`${baseUrl}/user/bookings`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          console.log(data);
+
+          if (res.ok) {
+            alert("Booking successful!");
+            calendar.refetchEvents();
+          } else {
+            alert("Booking failed: " + (data.message || "Unknown error"));
+          }
+        } catch (err) {
+          console.error("Booking error", err);
+          alert("Booking failed. Try again.");
+        }
+      }
+
+    })
+    </script>
+  </body>
+</html>

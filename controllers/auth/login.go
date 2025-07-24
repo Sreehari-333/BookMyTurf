@@ -44,6 +44,15 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Checking the user is blocked or not
+
+	if user.Blocked {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Your account is blocked. Please contact support.",
+		})
+		return
+	}
+
 	// checking password
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))

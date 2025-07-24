@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -26,6 +26,29 @@
         .addEventListener("submit", async function (e) {
           e.preventDefault();
 
+
+          let userId = null;
+
+// Fetch user profile once at load
+window.onload = async () => {
+  try {
+    const res = await fetch("/user/profile", {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("access_token"),
+      },
+    });
+
+    if (!res.ok) throw new Error("Unauthorized");
+
+    const data = await res.json();
+    userId = data.id;
+  } catch (err) {
+    console.error("Unable to fetch user profile", err);
+    alert("Please log in again.");
+  }
+};
+
+
           const formData = new FormData(e.target);
           const location = formData.get("location");
           const date = formData.get("date");
@@ -34,6 +57,8 @@
 
           const resultDiv = document.getElementById("searchResults");
           resultDiv.innerHTML = "<p>Searching...</p>";
+
+          
 
           try {
             const res = await fetch(
@@ -67,7 +92,6 @@
         });
 
       async function bookTurf(turfId, date, start, end) {
-        const userId = localStorage.getItem("user_id");
 
         if (!userId) {
           alert("User not logged in.");
@@ -76,6 +100,14 @@
 
         const startTimeISO = new Date(`${date}T${start}`).toISOString();
         const endTimeISO = new Date(`${date}T${end}`).toISOString();
+        console.log({
+          user_id: parseInt(userId),
+          turf_id: turfId,
+          date: date,
+          start_time: startTimeISO,
+          end_time: endTimeISO,
+          status: "confirmed",
+        });
 
         try {
           const res = await fetch("/user/bookings", {
@@ -108,4 +140,147 @@
       }
     </script>
   </body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Search Turfs</title>
+  <link rel="stylesheet" href="/static/user/style.css" />
+</head>
+<body>
+  <h1>Search Turfs</h1>
+
+  <section>
+    <input type="text" id="location" placeholder="Location" />
+    <input type="date" id="date" />
+    <input type="time" id="startTime" />
+    <input type="time" id="endTime" />
+    <button onclick="searchTurfs()">Search</button>
+  </section>
+
+  <section id="results"></section>
+
+  <script>
+    let userId = null;
+    function fetchUserId() {
+      fetch("/user/profile", {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("access_token"),
+        },
+      })
+        .then(res => res.json())
+        .then(data => {
+          userId = data.id;
+        })
+        .catch(err => {
+          console.error("Failed to fetch user ID:", err);
+        });
+    }
+
+    window.onload = fetchUserId;
+
+    function searchTurfs() {
+      const location = document.getElementById("location").value;
+      const date = document.getElementById("date").value;
+      const startTime = document.getElementById("startTime").value;
+      const endTime = document.getElementById("endTime").value;
+
+      const url = `/turfs/search?location=${location}&date=${date}&start_time=${startTime}&end_time=${endTime}`;
+
+      fetch(url, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("access_token"),
+        },
+      })
+        .then(res => res.json())
+        .then(data => {
+          const resultsDiv = document.getElementById("results");
+          resultsDiv.innerHTML = "";
+
+          if (data.length === 0) {
+            resultsDiv.innerHTML = "<p>No turfs found.</p>";
+            return;
+          }
+
+          data.forEach(turf => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+              <p><strong>${turf.name}</strong> - ${turf.location}</p>
+              <button onclick="bookTurf(${turf.ID})">Book</button>
+              <hr/>
+            `;
+            resultsDiv.appendChild(div);
+          });
+        });
+    }
+
+    async function bookTurf(turfId) {
+    try {
+      // ✅ Step 1: Fetch user profile
+      const profileRes = await fetch("http://localhost:8080/user/profile", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      if (!profileRes.ok) {
+        throw new Error("Failed to fetch user profile");
+      }
+
+      // const profileData = await profileRes.json();
+      // const userId = profileData.user.ID;
+
+      // ✅ Step 2: Get search input values again (used to populate booking time)
+      const date = document.getElementById("date").value;
+      const startTime = document.getElementById("startTime").value;
+      const endTime = document.getElementById("endTime").value;
+
+      // Combine date + time for ISO strings
+      const startDateTime = new Date(`${date}T${startTime}:00`);
+      const endDateTime = new Date(`${date}T${endTime}:00`);
+
+      // ✅ Step 3: Log details to debug
+      console.log("Booking Request Details:");
+      console.log("User ID:", userId);
+      console.log("Turf ID:", turfId);
+      console.log("Start Time:", startDateTime.toISOString());
+      console.log("End Time:", endDateTime.toISOString());
+      console.log("Date:", date);
+
+      // ✅ Step 4: Send POST request to backend
+      const bookingRes = await fetch("http://localhost:8080/user/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          turf_id: turfId,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          date: date,
+          status: "confirmed",
+        }),
+      });
+
+      // ✅ Step 5: Check booking response
+      if (!bookingRes.ok) {
+        const errData = await bookingRes.json();
+        console.error("Booking failed:", errData);
+        alert("Booking failed: " + (errData.error || "Unknown error"));
+        return;
+      }
+
+      alert("Turf booked successfully!");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An unexpected error occurred.");
+    }
+  }
+  </script>
+</body>
 </html>
