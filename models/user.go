@@ -11,4 +11,6 @@ type User struct {
 	Password string `json:"password" binding:"required"`
 	Role     int    `json:"role" gorm:"default:0"`
 	Blocked  bool   `gorm:"default:false"`
+	Phone    string `json:"phone" binding:"required" gorm:"type:varchar(15)"`
+	City     string `json:"city" binding:"required"`
 }

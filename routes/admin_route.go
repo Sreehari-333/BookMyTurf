@@ -2,7 +2,9 @@ package routes
 
 import (
 	adminController "BookMyTurf/controllers/admin"
+	"BookMyTurf/controllers/payment"
 	"BookMyTurf/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,5 +42,10 @@ func AdminRoutes(router *gin.Engine) {
 		// Booking management
 
 		admin.GET("/allbookings", adminController.GetAllBookings) // Get all bookings
+
+		// Payment
+
+		admin.GET("/payment", payment.GetAllPayments)
+		admin.DELETE("/payment/:id", payment.DeletePayment)
 	}
 }

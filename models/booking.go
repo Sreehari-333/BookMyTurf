@@ -15,5 +15,6 @@ type Booking struct {
 	StartTime time.Time `json:"start_time" binding:"required"`
 	EndTime   time.Time `json:"end_time" binding:"required"`
 	Date      string    `json:"date" binding:"required"`
-	Status    string    `json:"status"`
+	Status    string    `json:"status" gorm:"type:enum('pending','booked','cancelled','completed');default:'pending'"`
+	Payment   Payment   `gorm:"foreignKey:BookingID" json:"payment"`
 }

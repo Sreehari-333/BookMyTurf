@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"BookMyTurf/controllers/payment"
 	publicControllers "BookMyTurf/controllers/user"
 	"BookMyTurf/middleware"
 	"BookMyTurf/services"
@@ -20,4 +21,9 @@ func UserRoutes(router *gin.Engine) {
 	user.GET("/profile", publicControllers.GetProfile)
 	user.PUT("/profile", publicControllers.UpdateProfile)
 	user.GET("/checkslots", services.GetAvailableSlots)
+
+	// Payment
+
+	user.POST("/payment", payment.CreatePayment)
+	user.GET("/payment/:id", payment.GetPaymentByID)
 }

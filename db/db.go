@@ -37,7 +37,7 @@ func ConnectDB() {
 
 	// Migrating tables
 
-	err = DB.AutoMigrate(&models.User{}, &models.Turf{}, &models.Booking{}, &models.RefreshToken{}, &models.BlockedSlot{})
+	err = DB.AutoMigrate(&models.User{}, &models.Turf{}, &models.Booking{}, &models.RefreshToken{}, &models.BlockedSlot{}, &models.Payment{})
 
 	if err != nil {
 		log.Fatal("error with creating table", err)
